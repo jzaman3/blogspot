@@ -363,3 +363,46 @@ img {
   font-size: 14px;
   margin: 0;
 }
+
+.weather-widget {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.current-weather {
+  margin-bottom: 15px;
+}
+
+.temperature {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.hourly-forecast {
+  margin-top: 15px;
+}
+
+.hourly-items {
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 50px;
+}
+
+.weather-error {
+  background: #ffecec;
+  color: #d32f2f;
+  padding: 15px;
+  border-radius: 10px;
+}

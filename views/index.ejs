@@ -5,6 +5,34 @@
 
 <img src="/img/moto.jpg" alt="there's a motorcycle" class="moto-image" width="981" height="528">
 
+<!-- Weather Widget -->
+<!-- Weather Widget -->
+<% if (weather) { %>
+    <div class="weather-widget">
+      <h3>Weather in <%= weather.location %></h3>
+      <div class="current-weather">
+        <p class="temperature"><%= weather.temp %>°C</p>
+        <p class="conditions"><%= weather.description %></p>
+        <p class="time">Updated: <%= weather.time %></p>
+      </div>
+      
+      <div class="hourly-forecast">
+        <h4>Next 12 Hours</h4>
+        <div class="hourly-items">
+          <% weather.hourly.forEach(hour => { %>
+            <div class="hour">
+              <span class="hour-time"><%= hour.time %></span>
+              <span class="hour-temp"><%= hour.temp %>°C</span>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="weather-error">
+      <p>Weather data currently unavailable</p>
+    </div>
+  <% } %>
 
 <section class="articles">
     <h2 class="articles_heading">Latest Post</h2>

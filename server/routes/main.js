@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
+const axios = require('axios'); //new
 
 // Middleware for parsing form data
 router.use(express.urlencoded({ extended: true }));
@@ -11,12 +12,22 @@ router.get('', async (req, res) => {
     try {
         const locals = {
             title: "My Blog",
-            description: "Simple blog"
+            description: "Simple blog with weather"
         };
 
-        let perPage = 10;
-        let page = parseInt(req.query.page) || 1;
+        // Get weather data
+        let weather;
+        try {
+            weather = await getWeatherData();
+            console.log('Weather data:', weather); // Debug log
+        } catch (error) {
+            console.error('Weather API error:', error);
+            weather = null;
+        }
 
+        // Get blog posts
+        const perPage = 10;
+        const page = parseInt(req.query.page) || 1;
         const data = await Post.aggregate([{ $sort: { createdAt: -1 } }])
             .skip(perPage * page - perPage)
             .limit(perPage)
@@ -29,16 +40,79 @@ router.get('', async (req, res) => {
         res.render('index', {
             ...locals,
             data,
+            weather, // Make sure this is passed
             current: page,
             nextPage: hasNextPage ? nextPage : null,
             currentRoute: '/'
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Server Error');
+        console.error('Homepage error:', error);
+        res.status(500).render('error', { message: 'Server Error' });
     }
 });
+
+
+// Weather helper function
+async function getWeatherData() {
+    try {
+        const response = await axios.get(
+            'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m&current_weather=true'
+        );
+        
+        const current = response.data.current_weather;
+        const hourly = response.data.hourly;
+        
+        return {
+            temp: current.temperature,
+            description: getWeatherDescription(current.weathercode),
+            time: new Date(current.time).toLocaleTimeString(),
+            location: 'Atlanta', // Hardcoded for these coordinates
+            hourly: hourly.time.map((time, i) => ({
+                time: new Date(time).toLocaleTimeString([], {hour: '2-digit'}),
+                temp: hourly.temperature_2m[i]
+            })).slice(0, 12) // Next 12 hours
+        };
+    } catch (error) {
+        console.error('Weather API failed:', error.message);
+        throw error;
+    }
+}
+
+// Weather code translator
+function getWeatherDescription(code) {
+    const weatherCodes = {
+        0: 'Clear sky',
+        1: 'Mainly clear',
+        2: 'Partly cloudy',
+        3: 'Overcast',
+        45: 'Fog',
+        48: 'Rime fog',
+        51: 'Light drizzle',
+        53: 'Moderate drizzle',
+        55: 'Dense drizzle',
+        56: 'Light freezing drizzle',
+        57: 'Dense freezing drizzle',
+        61: 'Slight rain',
+        63: 'Moderate rain',
+        65: 'Heavy rain',
+        66: 'Light freezing rain',
+        67: 'Heavy freezing rain',
+        71: 'Slight snow',
+        73: 'Moderate snow',
+        75: 'Heavy snow',
+        77: 'Snow grains',
+        80: 'Slight rain showers',
+        81: 'Moderate rain showers',
+        82: 'Violent rain showers',
+        85: 'Slight snow showers',
+        86: 'Heavy snow showers',
+        95: 'Thunderstorm',
+        96: 'Thunderstorm with hail',
+        99: 'Heavy thunderstorm with hail'
+    };
+    return weatherCodes[code] || `Weather code ${code}`;
+}
 
 // Single post page with comments
 router.get('/post/:id', async (req, res) => {
